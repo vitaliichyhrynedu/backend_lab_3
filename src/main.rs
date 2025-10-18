@@ -15,10 +15,14 @@ async fn main() {
     let category_database = database();
     let category_router = categories::router().with_state(category_database);
 
+    let record_database = database();
+    let record_router = records::router().with_state(record_database);
+
     let router = Router::new()
         .route("/", get(root))
         .nest("/users", user_router)
-        .nest("/categories", category_router);
+        .nest("/categories", category_router)
+        .nest("/records", record_router);
 
     let port = env::var("PORT").expect("PORT environment variable must be set");
     let addr = format!("0.0.0.0:{}", port);

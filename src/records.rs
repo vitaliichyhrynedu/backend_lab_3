@@ -8,7 +8,7 @@ use axum::{
     response::IntoResponse,
     routing::get,
 };
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -74,23 +74,49 @@ impl IntoResponse for RecordError {
 }
 
 async fn get_record(State(db): State<Database<Record>>, Path(id): Path<Uuid>) -> Json<Record> {
-    todo!()
+    let db = db.read().await;
+    let record = db.get(&id).unwrap().clone();
+    Json(record)
 }
 
 async fn create_record(
     State(db): State<Database<Record>>,
     Json(record): Json<NewRecord>,
 ) -> (StatusCode, Json<Record>) {
-    todo!()
+    let mut db = db.write().await;
+    let record = Record {
+        id: Uuid::new_v4(),
+        user_id: record.user_id,
+        category_id: record.category_id,
+        datetime: Utc::now().naive_utc(),
+        sum: record.sum,
+    };
+    db.insert(record.id, record.clone());
+    (StatusCode::CREATED, Json(record))
 }
 
 async fn delete_record(State(db): State<Database<Record>>, Path(id): Path<Uuid>) -> StatusCode {
-    todo!()
+    let mut db = db.write().await;
+    db.remove(&id);
+    StatusCode::NO_CONTENT
 }
 
 async fn get_records(
     State(db): State<Database<Record>>,
     Query(params): Query<RecordFilterParams>,
 ) -> Result<Json<Vec<Record>>, RecordError> {
-    todo!()
+    let (user_id, category_id) = (params.user_id, params.category_id);
+    if user_id.is_none() && category_id.is_none() {
+        return Err(RecordError::MissingFilterParams);
+    }
+
+    let db = db.read().await;
+    let records = db
+        .values()
+        .filter(|record| user_id.map_or(true, |user_id| record.user_id == user_id))
+        .filter(|record| category_id.map_or(true, |category_id| record.category_id == category_id))
+        .cloned()
+        .collect();
+
+    Ok(Json(records))
 }
