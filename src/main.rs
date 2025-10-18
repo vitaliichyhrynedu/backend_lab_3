@@ -1,6 +1,8 @@
 use axum::{Router, routing::get};
 use std::env;
 
+mod users;
+
 #[tokio::main]
 async fn main() {
     let router = Router::new().route("/", get(root));
