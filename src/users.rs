@@ -34,20 +34,31 @@ struct NewUser {
 }
 
 async fn get_user(State(db): State<Database>, Path(id): Path<Uuid>) -> Json<User> {
-    todo!()
+    let db = db.read().await;
+    let user = db.get(&id).unwrap().clone();
+    Json(user)
 }
 
 async fn create_user(
     State(db): State<Database>,
     Json(user): Json<NewUser>,
 ) -> (StatusCode, Json<User>) {
-    todo!()
+    let mut db = db.write().await;
+    let user = User {
+        id: Uuid::new_v4(),
+        username: user.username,
+    };
+    db.insert(user.id, user.clone());
+    (StatusCode::CREATED, Json(user))
 }
 
 async fn delete_user(State(db): State<Database>, Path(id): Path<Uuid>) -> StatusCode {
-    todo!()
+    let mut db = db.write().await;
+    db.remove(&id);
+    StatusCode::NO_CONTENT
 }
 
 async fn get_users(State(db): State<Database>) -> Json<Vec<User>> {
-    todo!()
+    let db = db.read().await;
+    Json(db.values().cloned().collect())
 }
