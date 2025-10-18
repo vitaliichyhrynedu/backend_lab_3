@@ -1,11 +1,14 @@
-use axum::{Router, routing::get};
-use std::env;
-
+mod categories;
+mod database;
 mod users;
+
+use axum::{Router, routing::get};
+use database::database;
+use std::env;
 
 #[tokio::main]
 async fn main() {
-    let user_database = users::database();
+    let user_database = database();
     let user_router = users::router().with_state(user_database);
 
     let router = Router::new()
