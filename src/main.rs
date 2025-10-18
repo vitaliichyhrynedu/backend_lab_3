@@ -1,5 +1,6 @@
 mod categories;
 mod database;
+mod records;
 mod users;
 
 use axum::{Router, routing::get};
