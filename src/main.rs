@@ -1,5 +1,6 @@
 mod categories;
 mod database;
+mod health;
 mod records;
 mod users;
 
@@ -9,6 +10,8 @@ use std::env;
 
 #[tokio::main]
 async fn main() {
+    let health_router = health::router();
+
     let user_database = database();
     let user_router = users::router().with_state(user_database);
 
@@ -20,6 +23,7 @@ async fn main() {
 
     let router = Router::new()
         .route("/", get(root))
+        .nest("/health", health_router)
         .nest("/users", user_router)
         .nest("/categories", category_router)
         .nest("/records", record_router);
