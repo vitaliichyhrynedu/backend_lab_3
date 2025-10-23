@@ -1,5 +1,21 @@
 services:
   app:
     build: .
+    init: true
+    env_file: .env
     ports:
-      - "8080:8080"
+      - ${PORT}:${PORT}
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:18
+    ports:
+      - ${DATABASE_PORT}:${DATABASE_PORT}
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASS}
+    volumes:
+          - pgdata:/var/lib/postgresql
+
+volumes:
+  pgdata:
