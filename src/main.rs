@@ -1,6 +1,6 @@
 // mod categories;
 mod database;
-// mod health;
+mod health;
 // mod records;
 // mod users;
 
@@ -32,14 +32,14 @@ async fn main() {
 
     let state = AppState { db: db };
 
-    // let health_router = health::router();
+    let health_router = health::router();
     // let user_router = users::router();
     // let category_router = categories::router();
     // let record_router = records::router();
 
     let router = Router::new()
         .route("/", get(root))
-        // .nest("/health", health_router)
+        .nest("/health", health_router)
         // .nest("/users", user_router)
         // .nest("/categories", category_router)
         // .nest("/records", record_router)
