@@ -1,12 +1,12 @@
-# Backend Development: Lab 2
+# Backend Development: Lab 3
 
 ## Run
 
 ### Clone the repository:
 
 ```sh
-git clone https://github.com/vitaliichyhrynedu/backend_lab_2.git
-cd backend_lab_2
+git clone https://github.com/vitaliichyhrynedu/backend_lab_3.git
+cd backend_lab_3
 ```
 
 ### Run the application:
