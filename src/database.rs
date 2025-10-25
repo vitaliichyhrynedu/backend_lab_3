@@ -1,10 +1,9 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{env, error::Error};
 
-use tokio::sync::RwLock;
-use uuid::Uuid;
+use sea_orm::{Database, DatabaseConnection};
 
-pub type Database<T> = Arc<RwLock<HashMap<Uuid, T>>>;
-
-pub fn database<T>() -> Database<T> {
-    Arc::new(RwLock::new(HashMap::new()))
+pub async fn connection() -> Result<DatabaseConnection, Box<dyn Error>> {
+    let db_url = env::var("DATABASE_URL")?;
+    let db = Database::connect(db_url).await?;
+    Ok(db)
 }

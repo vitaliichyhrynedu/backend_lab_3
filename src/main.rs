@@ -1,37 +1,57 @@
-mod categories;
+// mod categories;
 mod database;
-mod health;
-mod records;
-mod users;
+// mod health;
+// mod records;
+// mod users;
 
 use axum::{Router, routing::get};
-use database::database;
+use dotenvy::dotenv;
+use sea_orm::DatabaseConnection;
 use std::env;
+
+#[derive(Clone)]
+struct AppState {
+    db: DatabaseConnection,
+}
 
 #[tokio::main]
 async fn main() {
-    let health_router = health::router();
+    dotenv().ok();
 
-    let user_database = database();
-    let user_router = users::router().with_state(user_database);
+    eprintln!("connecting to database");
+    let db = match database::connection().await {
+        Ok(db) => {
+            eprintln!("database connection established");
+            db
+        }
+        Err(e) => {
+            eprintln!("database connection failed: {}", e);
+            std::process::exit(1);
+        }
+    };
 
-    let category_database = database();
-    let category_router = categories::router().with_state(category_database);
+    let state = AppState { db: db };
 
-    let record_database = database();
-    let record_router = records::router().with_state(record_database);
+    // let health_router = health::router();
+    // let user_router = users::router();
+    // let category_router = categories::router();
+    // let record_router = records::router();
 
     let router = Router::new()
         .route("/", get(root))
-        .nest("/health", health_router)
-        .nest("/users", user_router)
-        .nest("/categories", category_router)
-        .nest("/records", record_router);
+        // .nest("/health", health_router)
+        // .nest("/users", user_router)
+        // .nest("/categories", category_router)
+        // .nest("/records", record_router)
+        .with_state(state);
 
-    let port = env::var("PORT").expect("PORT environment variable must be set");
-    let addr = format!("0.0.0.0:{}", port);
+    let host = env::var("HOST").expect("HOST must be set");
+    let port = env::var("PORT").expect("PORT must be set");
+    let addr = format!("{}:{}", host, port);
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    eprintln!("starting server");
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    eprintln!("listening on http://{}", &addr);
     axum::serve(listener, router).await.unwrap();
 }
 
