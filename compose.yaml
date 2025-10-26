@@ -3,6 +3,8 @@ services:
     build: .
     init: true
     env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_DOCKER_URL}
     ports:
       - ${PORT}:${PORT}
     depends_on:
