@@ -1,4 +1,5 @@
 mod database;
+mod error;
 mod routers;
 
 use dotenvy::dotenv;
