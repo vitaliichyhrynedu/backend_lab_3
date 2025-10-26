@@ -16,17 +16,16 @@ async fn main() {
     dotenv().ok();
 
     eprintln!("connecting to database");
-    let db = match database::connect().await {
-        Ok(db) => {
-            eprintln!("database connection established");
-            db
-        }
-        Err(e) => {
-            eprintln!("database connection failed: {}", e);
-            std::process::exit(1);
-        }
-    };
-    Migrator::up(&db, None).await.unwrap();
+    let db = database::connect()
+        .await
+        .unwrap_or_else(|e| panic!("failed to connect to database: {e}"));
+    eprintln!("database connection established");
+
+    eprintln!("applying migrations");
+    Migrator::up(&db, None)
+        .await
+        .unwrap_or_else(|e| panic!("failed to apply migrations: {e}"));
+    eprintln!("migrations applied");
 
     let state = AppState { db: db };
     let router = routers::router().with_state(state);
