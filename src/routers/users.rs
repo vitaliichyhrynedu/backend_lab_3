@@ -1,56 +1,95 @@
-use crate::database::Database;
 use axum::{
     Json, Router,
     extract::{Path, State},
     http::StatusCode,
     routing::get,
 };
+use sea_orm::{ActiveModelTrait, ActiveValue::Set, EntityTrait};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-pub fn router() -> Router<Database<User>> {
+use crate::{AppState, error::AppError};
+use entity::user;
+
+pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(get_users).post(create_user))
         .route("/{user_id}", get(get_user).delete(delete_user))
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserBody<T> {
+    user: T,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UsersBody<T> {
+    users: Vec<T>,
+}
+
+#[derive(Debug, Serialize)]
 pub struct User {
     id: Uuid,
-    username: String,
+    name: String,
 }
 
-#[derive(Deserialize)]
-struct NewUser {
-    username: String,
+impl From<user::Model> for User {
+    fn from(value: user::Model) -> Self {
+        Self {
+            id: value.id,
+            name: value.name,
+        }
+    }
 }
 
-async fn get_user(State(db): State<Database<User>>, Path(id): Path<Uuid>) -> Json<User> {
-    let db = db.read().await;
-    let user = db.get(&id).unwrap().clone();
-    Json(user)
+#[derive(Debug, Deserialize)]
+pub struct UserCreate {
+    name: String,
 }
 
-async fn create_user(
-    State(db): State<Database<User>>,
-    Json(user): Json<NewUser>,
-) -> (StatusCode, Json<User>) {
-    let mut db = db.write().await;
-    let user = User {
-        id: Uuid::new_v4(),
-        username: user.username,
+pub async fn get_user(
+    State(AppState { db }): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<UserBody<User>>, AppError> {
+    let user = user::Entity::find_by_id(id)
+        .one(&db)
+        .await?
+        .ok_or(AppError::NotFound)?
+        .into();
+    Ok(Json(UserBody { user }))
+}
+
+pub async fn create_user(
+    State(AppState { db }): State<AppState>,
+    Json(body): Json<UserBody<UserCreate>>,
+) -> Result<(StatusCode, Json<UserBody<User>>), AppError> {
+    let user = user::ActiveModel {
+        name: Set(body.user.name),
+        ..Default::default()
     };
-    db.insert(user.id, user.clone());
-    (StatusCode::CREATED, Json(user))
+    let user = user.insert(&db).await?.into();
+    Ok((StatusCode::CREATED, Json(UserBody { user })))
 }
 
-async fn delete_user(State(db): State<Database<User>>, Path(id): Path<Uuid>) -> StatusCode {
-    let mut db = db.write().await;
-    db.remove(&id);
-    StatusCode::NO_CONTENT
+pub async fn delete_user(
+    State(AppState { db }): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, AppError> {
+    let res = user::Entity::delete_by_id(id).exec(&db).await?;
+    match res.rows_affected {
+        0 => Err(AppError::NotFound),
+        _ => Ok(StatusCode::NO_CONTENT),
+    }
 }
 
-async fn get_users(State(db): State<Database<User>>) -> Json<Vec<User>> {
-    let db = db.read().await;
-    Json(db.values().cloned().collect())
+pub async fn get_users(
+    State(AppState { db }): State<AppState>,
+) -> Result<Json<UsersBody<User>>, AppError> {
+    let users = user::Entity::find()
+        .all(&db)
+        .await?
+        .into_iter()
+        .map(Into::into)
+        .collect();
+    Ok(Json(UsersBody { users }))
 }
