@@ -337,6 +337,8 @@ dependencies = [
  "axum",
  "chrono",
  "dotenvy",
+ "entity",
+ "migration",
  "rust_decimal",
  "sea-orm",
  "serde",
