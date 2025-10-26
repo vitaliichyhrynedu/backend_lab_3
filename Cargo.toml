@@ -3,6 +3,9 @@ name = "backend_lab_3"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = [".", "migration"]
+
 [dependencies]
 axum = { version = "0.8.6", features = ["query"] }
 chrono = { version = "0.4.42", features = ["serde"] }
