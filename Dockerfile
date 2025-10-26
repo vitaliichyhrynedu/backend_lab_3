@@ -8,6 +8,8 @@ FROM rust:${RUST_VERSION}-slim AS builder
 ARG APP_NAME
 WORKDIR /app
 RUN --mount=type=bind,source=src,target=src \
+    --mount=type=bind,source=entity,target=entity \
+    --mount=type=bind,source=migration,target=migration \
     --mount=type=bind,source=Cargo.toml,target=Cargo.toml \
     --mount=type=bind,source=Cargo.lock,target=Cargo.lock \
     --mount=type=cache,target=/app/target/ \
