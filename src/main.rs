@@ -2,6 +2,7 @@ mod database;
 mod routers;
 
 use dotenvy::dotenv;
+use migration::{Migrator, MigratorTrait};
 use sea_orm::DatabaseConnection;
 use std::env;
 
@@ -15,7 +16,7 @@ async fn main() {
     dotenv().ok();
 
     eprintln!("connecting to database");
-    let db = match database::connection().await {
+    let db = match database::connect().await {
         Ok(db) => {
             eprintln!("database connection established");
             db
@@ -25,6 +26,7 @@ async fn main() {
             std::process::exit(1);
         }
     };
+    Migrator::up(&db, None).await.unwrap();
 
     let state = AppState { db: db };
     let router = routers::router().with_state(state);
