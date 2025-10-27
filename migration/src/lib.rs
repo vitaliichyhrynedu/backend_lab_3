@@ -2,6 +2,7 @@ pub use sea_orm_migration::prelude::*;
 
 mod m20251026_160714_create_users_table;
 mod m20251026_233421_create_categories_table;
+mod m20251027_010727_create_records_table;
 
 pub struct Migrator;
 
@@ -11,6 +12,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20251026_160714_create_users_table::Migration),
             Box::new(m20251026_233421_create_categories_table::Migration),
+            Box::new(m20251027_010727_create_records_table::Migration),
         ]
     }
 }
