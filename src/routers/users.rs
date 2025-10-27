@@ -47,6 +47,22 @@ pub struct UserCreate {
     name: String,
 }
 
+impl UserCreate {
+    fn validate(&self) -> Result<(), AppError> {
+        let mut errors = Vec::new();
+
+        if self.name.is_empty() {
+            errors.push(("name", "name is empty"));
+        }
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(AppError::unprocessable_entity(errors))
+        }
+    }
+}
+
 pub async fn get_user(
     State(AppState { db }): State<AppState>,
     Path(id): Path<Uuid>,
@@ -63,6 +79,7 @@ pub async fn create_user(
     State(AppState { db }): State<AppState>,
     Json(body): Json<UserBody<UserCreate>>,
 ) -> Result<(StatusCode, Json<UserBody<User>>), AppError> {
+    body.user.validate()?;
     let user = user::ActiveModel {
         name: Set(body.user.name),
         ..Default::default()
