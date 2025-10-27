@@ -47,6 +47,22 @@ struct CategoryCreate {
     name: String,
 }
 
+impl CategoryCreate {
+    fn validate(&self) -> Result<(), AppError> {
+        let mut errors = Vec::new();
+
+        if self.name.is_empty() {
+            errors.push(("name", "name is empty"));
+        }
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(AppError::unprocessable_entity(errors))
+        }
+    }
+}
+
 async fn get_category(
     State(AppState { db }): State<AppState>,
     Path(id): Path<Uuid>,
@@ -63,6 +79,7 @@ async fn create_category(
     State(AppState { db }): State<AppState>,
     Json(body): Json<CategoryBody<CategoryCreate>>,
 ) -> Result<(StatusCode, Json<CategoryBody<Category>>), AppError> {
+    body.category.validate()?;
     let category = category::ActiveModel {
         name: Set(body.category.name),
         ..Default::default()
